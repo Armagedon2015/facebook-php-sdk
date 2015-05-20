@@ -1,0 +1,69 @@
+commit 04168d544f71293fab7622fa81161eef51db808e
+Author: Arthur Rudolph <arudolph@gmail.com>
+Date:   Tue Mar 22 13:32:56 2011 -0700
+
+    support video.upload against api-video
+
+diff --git a/src/facebook.php b/src/facebook.php
+index 6e0ddac..b9b064b 100644
+--- a/src/facebook.php
++++ b/src/facebook.php
+@@ -141,10 +141,11 @@ class Facebook
+    * Maps aliases to Facebook domains.
+    */
+   public static $DOMAIN_MAP = array(
+-    'api'      => 'https://api.facebook.com/',
+-    'api_read' => 'https://api-read.facebook.com/',
+-    'graph'    => 'https://graph.facebook.com/',
+-    'www'      => 'https://www.facebook.com/',
++    'api'       => 'https://api.facebook.com/',
++    'api_video' => 'https://api-video.facebook.com/',
++    'api_read'  => 'https://api-read.facebook.com/',
++    'graph'     => 'https://graph.facebook.com/',
++    'www'       => 'https://www.facebook.com/',
+   );
+ 
+   /**
+@@ -865,6 +866,8 @@ class Facebook
+     $name = 'api';
+     if (isset($READ_ONLY_CALLS[strtolower($method)])) {
+       $name = 'api_read';
++    } else if (strtolower($method) == 'video.upload') {
++      $name = 'api_video';
+     }
+     return self::getUrl($name, 'restserver.php');
+   }
+diff --git a/tests/tests.php b/tests/tests.php
+index d6973ea..1a798ff 100644
+--- a/tests/tests.php
++++ b/tests/tests.php
+@@ -754,6 +754,29 @@ class PHPSDKTestCase extends PHPUnit_Framework_TestCase
+       $response['id'], '5526183', 'should get expected id.');
+   }
+ 
++  public function testVideoUpload() {
++    $facebook = new FBRecordURL(array(
++      'appId'  => self::APP_ID,
++      'secret' => self::SECRET,
++      'cookie' => true,
++    ));
++    $facebook->setSession(self::$VALID_EXPIRED_SESSION);
++    $facebook->api(array('method' => 'video.upload'));
++    $this->assertContains('//api-video.', $facebook->getRequestedURL(),
++      'video.upload should go against api-video');
++  }
++}
++
++class FBRecordURL extends Facebook {
++  private $url;
++
++  protected function _oauthRequest($url, $params) {
++    $this->url = $url;
++  }
++
++  public function getRequestedURL() {
++    return $this->url;
++  }
+ }
+ 
+ class FBPublic extends Facebook {
